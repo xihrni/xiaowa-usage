@@ -117,8 +117,9 @@ npm run check
 
 见 [FAQ](docs/FAQ.md)。
 
-## 更新与发布
+## 项目文档
 
+- [需求基线](REQUIREMENTS.md)
 - [自动更新说明](docs/UPDATES.md)
 - [发布流程](docs/RELEASING.md)
 - [Windows 代码签名](docs/CODE_SIGNING.md)
