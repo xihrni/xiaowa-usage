@@ -10,6 +10,21 @@
 
 仓库地址：<https://github.com/xihrni/xiaowa-usage>
 
+## 界面预览
+
+<table>
+  <tr>
+    <td width="50%"><a href="docs/screenshots/current-session.png"><img src="docs/screenshots/current-session.png" alt="当前会话统计面板"></a><br><sub>当前会话：积分、Token 构成与最近请求</sub></td>
+    <td width="50%"><a href="docs/screenshots/trends.png"><img src="docs/screenshots/trends.png" alt="历史趋势与模型消耗"></a><br><sub>历史趋势：每日积分与模型消耗</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><a href="docs/screenshots/session-ranking.png"><img src="docs/screenshots/session-ranking.png" alt="会话积分排行"></a><br><sub>会话排行：按积分与 Token 对比</sub></td>
+    <td width="50%"><a href="docs/screenshots/request-details.png"><img src="docs/screenshots/request-details.png" alt="请求用量明细"></a><br><sub>请求明细：按时间和模型查看</sub></td>
+  </tr>
+</table>
+
+> 以上截图使用虚构演示数据，不包含真实会话内容。
+
 ## 功能
 
 - **桌面宠物**：透明置顶，可拖动位置，收起后停留在系统托盘。
