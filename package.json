@@ -1,6 +1,6 @@
 {
   "name": "workbuddy-pet",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Community desktop pet for local WorkBuddy credit and token statistics",
   "main": "src/main.js",
