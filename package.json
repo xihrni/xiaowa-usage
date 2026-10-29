@@ -17,7 +17,7 @@
   "scripts": {
     "start": "electron .",
     "check": "node src/check-data.js",
-    "dist": "node node_modules/electron-builder/cli.js --win --x64"
+    "dist": "node node_modules/electron-builder/cli.js --win --x64 --publish never"
   },
   "devDependencies": {
     "electron": "^38.3.0",
