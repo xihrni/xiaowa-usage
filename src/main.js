@@ -54,6 +54,39 @@ function togglePanel(show) {
   win.webContents.send('panel:state', expanded);
 }
 
+function repairShortcutIcons() {
+  if (process.platform !== 'win32' || !app.isPackaged) return;
+  const candidates = [
+    path.join(process.resourcesPath, 'icon.ico'),
+    path.join(path.dirname(app.getPath('exe')), 'icon.ico')
+  ];
+  const iconPath = candidates.find(file => fs.existsSync(file));
+  if (!iconPath) return;
+  const startMenu = path.join(app.getPath('appData'), 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'WorkBuddyPet');
+  const shortcuts = [
+    path.join(app.getPath('desktop'), 'WorkBuddy 小哇助手.lnk'),
+    path.join(startMenu, 'WorkBuddy 小哇助手.lnk'),
+    path.join(startMenu, '卸载小哇助手.lnk')
+  ];
+  for (const shortcut of shortcuts) {
+    if (!fs.existsSync(shortcut)) continue;
+    try {
+      const details = shell.readShortcutLink(shortcut);
+      shell.writeShortcutLink(shortcut, 'update', {
+        target: details.target,
+        args: details.args,
+        cwd: details.cwd,
+        description: details.description,
+        icon: iconPath,
+        iconIndex: 0,
+        appUserModelId: details.appUserModelId
+      });
+    } catch (error) {
+      console.warn('Unable to repair shortcut icon:', shortcut, error.message);
+    }
+  }
+}
+
 function createTray() {
   const icon = nativeImage.createFromPath(path.join(__dirname, '..', 'assets', 'idle.png')).resize({ width: 32, height: 32 });
   tray = new Tray(icon);
@@ -269,6 +302,7 @@ app.whenReady().then(() => {
   loadSettings();
   createWindow();
   createTray();
+  repairShortcutIcons();
   setupAutoUpdater();
   refreshUsage();
   refreshTimer = setInterval(refreshUsage, 5000);

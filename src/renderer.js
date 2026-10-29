@@ -128,6 +128,7 @@ function taskDelta(item) {
 }
 
 function paintStats(items) {
+  if (welcomeActive) return;
   const first = items[0]?.session;
   if (!first) return hideBubble();
   taskState.phase = 'stats';
@@ -150,6 +151,7 @@ function paintStats(items) {
 }
 
 function paintBatch() {
+  if (welcomeActive) return;
   const batch = taskState.batch;
   if (!batch?.items.length) return hideBubble();
   const items = batch.items;
@@ -172,6 +174,38 @@ function hideBubble() {
   taskState.batch = null;
   $('#petBubble').className = 'pet-bubble';
   setPetMode(taskState.active.size ? 'working' : 'idle');
+}
+
+let welcomeTimer = null;
+let welcomeActive = false;
+function greetingForNow() {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 9) return { title: '早上好，主人！', message: '新的一天，也一起加油吧。' };
+  if (hour >= 9 && hour < 12) return { title: '上午好，主人。', message: '先看看今天的用量吧。' };
+  if (hour >= 12 && hour < 14) return { title: '中午好，主人。', message: '记得吃饭和休息一下。' };
+  if (hour >= 14 && hour < 18) return { title: '下午好，主人。', message: '小哇陪你把事情做完。' };
+  if (hour >= 18 && hour < 23) return { title: '晚上好，主人。', message: '今天辛苦啦，看看今天的收获吧。' };
+  return { title: '夜深了，主人。', message: '注意休息，小哇明天再陪你。' };
+}
+
+function showWelcomeGreeting() {
+  if (welcomeActive) return;
+  const greeting = greetingForNow();
+  const bubble = $('#petBubble');
+  clearBubbleTimer();
+  clearTimeout(welcomeTimer);
+  welcomeActive = true;
+  bubble.className = 'pet-bubble visible welcome';
+  bubble.dataset.session = '';
+  $('#activeTitle').textContent = greeting.title;
+  $('#activeTitle').title = greeting.title;
+  $('#bubbleMessage').textContent = greeting.message;
+  setPetMode('greeting');
+  welcomeTimer = setTimeout(() => {
+    welcomeActive = false;
+    if (bubble.classList.contains('welcome')) bubble.className = 'pet-bubble';
+    setPetMode(taskState.active.size ? 'working' : 'idle');
+  }, 5000);
 }
 
 function showTaskStats(sessionOrItems) {
@@ -209,12 +243,12 @@ function beginForeground(session) {
   setPetMode('working');
   if (!savedSettings.processingEnabled || isDnd()) {
     taskState.phase = 'hidden';
-    $('#petBubble').className = 'pet-bubble';
+    if (!welcomeActive) $('#petBubble').className = 'pet-bubble';
     return;
   }
   taskState.phase = 'waiting';
   scheduleBubble(() => {
-    if (taskState.foregroundId !== session.id || isDnd()) return;
+    if (welcomeActive || taskState.foregroundId !== session.id || isDnd()) return;
     taskState.phase = 'processing';
     const bubble = $('#petBubble');
     bubble.className = 'pet-bubble visible processing';
@@ -691,3 +725,4 @@ window.petAPI.onError(message => { $('#petStatus').textContent = `读取失败�
 window.petAPI.onPanelState(expanded => { state.expanded = expanded; document.body.classList.toggle('expanded', expanded); });
 $('#petImage')
 window.petAPI.refresh().then(acceptData).catch(error => { $('#petStatus').textContent = error.message; showDataNotice(error.message); });
+setTimeout(showWelcomeGreeting, 700);

@@ -40,6 +40,12 @@
       "assets/**/*",
       "package.json"
     ],
+    "extraResources": [
+      {
+        "from": "assets/icon.ico",
+        "to": "icon.ico"
+      }
+    ],
     "directories": {
       "output": "release-builder"
     },

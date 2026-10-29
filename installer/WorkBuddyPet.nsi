@@ -36,17 +36,18 @@ UninstPage instfiles
 Section "Install"
   SetOutPath "$INSTDIR"
   File /r "${PROJECT_ROOT}\release\WorkBuddyPet\*.*"
+  File "${PROJECT_ROOT}\assets\icon.ico"
   WriteUninstaller "$INSTDIR\Uninstall.exe"
 
   CreateDirectory "$SMPROGRAMS\WorkBuddyPet"
-  CreateShortcut "$SMPROGRAMS\WorkBuddyPet\WorkBuddy 小哇助手.lnk" "$INSTDIR\${APP_EXE}" "" "$INSTDIR\${APP_EXE}" 0
-  CreateShortcut "$SMPROGRAMS\WorkBuddyPet\卸载小哇助手.lnk" "$INSTDIR\Uninstall.exe"
-  CreateShortcut "$DESKTOP\WorkBuddy 小哇助手.lnk" "$INSTDIR\${APP_EXE}" "" "$INSTDIR\${APP_EXE}" 0
+  CreateShortcut "$SMPROGRAMS\WorkBuddyPet\WorkBuddy 小哇助手.lnk" "$INSTDIR\${APP_EXE}" "" "$INSTDIR\icon.ico" 0
+  CreateShortcut "$SMPROGRAMS\WorkBuddyPet\卸载小哇助手.lnk" "$INSTDIR\Uninstall.exe" "" "$INSTDIR\icon.ico" 0
+  CreateShortcut "$DESKTOP\WorkBuddy 小哇助手.lnk" "$INSTDIR\${APP_EXE}" "" "$INSTDIR\icon.ico" 0
 
   WriteRegStr HKCU "Software\${APP_ID}" "InstallDir" "$INSTDIR"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_ID}" "DisplayName" "${APP_NAME}"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_ID}" "DisplayVersion" "${APP_VERSION}"
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_ID}" "DisplayIcon" "$INSTDIR\${APP_EXE}"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_ID}" "DisplayIcon" "$INSTDIR\icon.ico"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_ID}" "Publisher" "${APP_PUBLISHER}"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_ID}" "URLInfoAbout" "${APP_HOMEPAGE}"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_ID}" "InstallLocation" "$INSTDIR"
