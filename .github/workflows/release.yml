@@ -96,7 +96,7 @@ jobs:
           Get-Item $setup, $portableZip, $latest, $blockmap, $checksumFile | Format-Table Name, Length
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: WorkBuddyPet-windows-${{ github.ref_name }}
           if-no-files-found: error
