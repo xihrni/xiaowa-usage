@@ -8,6 +8,7 @@
 
 > 本项目是社区工具，不是 WorkBuddy 官方产品，与 WorkBuddy 官方无隶属关系。
 
+产品主页：<https://xiaowa.xihrni.com>  
 仓库地址：<https://github.com/xihrni/xiaowa-usage>
 
 ## 界面预览
