@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WorkBuddy 小哇</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-tab="current">
+  <main id="app">
+    <section class="pet-stage" id="petStage">
+      <div class="pet-bubble" id="petBubble">
+        <div class="live-row"><span class="live-dot"></span><span id="activeTitle">正在读取会话…</span></div>
+        <div class="bubble-message" id="bubbleMessage"></div>
+        <div class="bubble-stats" id="bubbleStats"><div class="bubble-stat"><strong id="petCredits">--</strong><span>本次积分</span></div><div class="bubble-stat"><strong id="petToday">--</strong><span>本次 Token</span></div></div>
+        <div class="bubble-tokens" id="petTokens"></div>
+      </div>
+      <img id="petImage" class="pet-image" src="../assets/greeting.png" alt="WorkBuddy 小猫娘" draggable="false">
+      <div class="pet-hint" id="petStatus">点我查看用量</div>
+    </section>
+
+    <section class="dashboard" id="dashboard">
+      <header class="dashboard-header">
+        <div><span class="eyebrow">WORKBUDDY COMPANION</span><h1>用量统计</h1></div>
+        <div class="header-actions"><span id="updatedAt">尚未同步</span><button id="refreshButton" title="刷新数据">↻</button><button id="closePanel" class="icon-button" title="收起面板" aria-label="收起面板">−</button><button id="closeApp" title="隐藏到托盘">×</button></div>
+      </header>
+      <div class="data-notice" id="dataNotice" hidden></div>
+      <nav class="tabs">
+        <button class="active" data-tab="current">当前会话</button>
+        <button data-tab="today">今日概览</button>
+        <button data-tab="all">全部会话</button>
+        <button data-tab="trends">历史趋势</button>
+        <button data-tab="sessions">会话排行</button>
+        <button data-tab="requests">请求明细</button>
+        <button data-tab="settings">宠物设置</button>
+      </nav>
+      <div class="date-filter" id="dateFilter" style="display:none">
+        <select id="rangePreset" aria-label="快捷日期范围"><option value="all">全部时间</option><option value="today">今日</option><option value="7">近 7 天</option><option value="15" selected>近 15 天</option><option value="30">近 30 天</option><option value="billing">上月 16 日–本月 15 日</option><option value="custom">自定义区间</option></select>
+        <input id="startDate" type="date" aria-label="开始日期"><span>至</span><input id="endDate" type="date" aria-label="结束日期"><button id="applyRange">应用</button><button id="clearRange" class="text-button">重置</button>
+      </div>
+      <div class="dashboard-content">
+        <section class="tab-page active" id="tab-current">
+          <div class="session-picker-row"><label>统计会话</label><div class="session-select" id="sessionSelect"><button id="sessionSelectButton" type="button" aria-haspopup="listbox" aria-expanded="false"><span id="sessionSelectLabel">全部会话</span><span class="select-arrow" aria-hidden="true"></span></button><div class="session-menu" id="sessionMenu"><div class="session-menu-inner" id="sessionMenuInner" role="listbox"></div></div></div></div>
+          <div class="metric-grid" id="currentMetrics"></div>
+          <div class="two-columns">
+            <article class="card"><div class="card-title">上下文占用</div><div id="contextUsage"></div></article>
+            <article class="card"><div class="card-title">Token 构成</div><div id="tokenBreakdown"></div></article>
+          </div>
+          <article class="card recent-card"><div class="card-title">最近请求 <span>最近 5 次模型调用</span></div><div id="recentRequests" class="compact-list"></div></article>
+        </section>
+        <section class="tab-page" id="tab-today">
+          <div class="hero-metric"><span>今日累计消耗</span><strong id="todayCredits">--</strong><em>积分</em><small>按模型请求的实际发生时间统计，跨天会话不会重复计入</small></div>
+          <div class="metric-grid four" id="todayMetrics"></div>
+          <article class="card"><div class="card-title" id="todaySessionsTitle">今日活跃会话</div><div id="todaySessions" class="compact-list"></div></article>
+          <div class="two-columns"><article class="card"><div class="card-title">模型消耗</div><div id="todayModels" class="compact-list"></div></article><article class="card"><div class="card-title">Token 构成</div><div id="todayTokenBreakdown"></div></article></div>
+        </section>
+        <section class="tab-page" id="tab-all">
+          <div class="metric-grid four" id="allMetrics"></div>
+          <div class="two-columns"><article class="card"><div class="card-title">会话使用概况</div><div id="allSessionSummary" class="compact-list"></div></article><article class="card"><div class="card-title">全部 Token 构成</div><div id="allTokenBreakdown"></div></article></div>
+        </section>
+        <section class="tab-page" id="tab-trends">
+          <div class="two-columns trend-columns"><article class="card"><div class="card-title" id="dailyChartTitle">近 14 天积分</div><div id="dailyChart" class="bar-chart"></div></article><article class="card"><div class="card-title">模型消耗</div><div id="modelStats" class="compact-list"></div></article></div>
+          <div class="metric-grid four" id="trendSummary"></div>
+        </section>
+        <section class="tab-page" id="tab-sessions">
+          <div class="table-wrap"><table><thead><tr><th>会话</th><th>积分</th><th>总 Token</th><th>请求</th><th>最后活跃</th></tr></thead><tbody id="sessionRows"></tbody></table></div>
+          <div class="pagination" id="sessionPagination"></div>
+        </section>
+        <section class="tab-page" id="tab-requests">
+          <div class="table-wrap"><table><thead><tr><th>时间</th><th>会话 / 模型</th><th>积分</th><th>输入</th><th>输出</th><th>缓存</th></tr></thead><tbody id="requestRows"></tbody></table></div>
+          <div class="request-bottom"><div class="request-filter"><label>统计范围</label><div class="session-select request-session-select" id="requestSessionSelect"><button id="requestSessionSelectButton" type="button" aria-haspopup="listbox" aria-expanded="false"><span id="requestSessionSelectLabel">全部会话</span><span class="select-arrow" aria-hidden="true"></span></button><div class="session-menu"><div class="session-menu-inner" id="requestSessionMenuInner" role="listbox"></div></div></div></div><div class="pagination" id="requestPagination"></div></div>
+        </section>
+        <section class="tab-page" id="tab-settings">
+          <div class="settings-card">
+            <div class="setting-row"><div><strong>宠物大小</strong><span>调整桌面宠物的整体显示尺寸</span></div><output id="scaleValue">80%</output></div>
+            <input id="scaleSlider" type="range" min="60" max="150" step="5" value="80">
+            <div class="range-labels"><span>小巧</span><span>标准</span><span>放大</span></div>
+          </div>
+          <div class="settings-card">
+            <div class="setting-row"><div><strong>窗口透明度</strong><span>同时作用于宠物、气泡和统计面板</span></div><output id="opacityValue">96%</output></div>
+            <input id="opacitySlider" type="range" min="30" max="100" step="1" value="96">
+            <div class="range-labels"><span>更透明</span><span>不透明</span></div>
+          </div>
+          <div class="settings-card">
+            <div class="setting-row"><div><strong>任务气泡通知</strong><span>平时隐藏，按任务状态自动出现和消失</span></div></div>
+            <div class="notify-grid">
+              <label><input id="processingEnabled" type="checkbox" checked> 处理中提示</label>
+              <label><input id="completionEnabled" type="checkbox" checked> 完成通知</label>
+              <label><input id="statsEnabled" type="checkbox" checked> 完成后统计</label>
+              <label><input id="hoverPause" type="checkbox" checked> 悬停暂停隐藏</label>
+              <label><input id="backgroundNotifications" type="checkbox"> 后台任务通知</label>
+              <label><input id="soundEnabled" type="checkbox"> 完成提示音</label>
+              <label><input id="dndEnabled" type="checkbox"> 启用免打扰</label>
+            </div>
+            <div class="dnd-row"><span>免打扰时段</span><input id="dndStart" type="time" value="22:00"><span>至</span><input id="dndEnd" type="time" value="08:00"><small>支持跨午夜</small></div>
+            <div class="duration-grid">
+              <label>处理中延迟<div><input id="processingDelay" type="number" min="0" max="5000" step="100" value="500"><span>ms</span></div></label>
+              <label>完成通知停留<div><input id="completionDuration" type="number" min="1" max="60" step="1" value="2"><span>秒</span></div></label>
+              <label>统计气泡停留<div><input id="statsDuration" type="number" min="3" max="60" step="1" value="6"><span>秒</span></div></label>
+            </div>
+          </div>
+          <div class="settings-actions"><span id="settingsHint">调整后点击保存才会应用</span><button id="saveSettings" disabled>保存设置</button></div>
+          <div class="settings-note">点击小猫开合统计面板，拖动小猫调整位置；关闭窗口后会隐藏在右下角托盘中。</div>
+        </section>
+      </div>
+      <footer><span>数据仅在本机读取，不上传会话内容</span><span>Token 为各次模型请求累计处理量</span></footer>
+    </section>
+  </main>
+  <script src="renderer.js"></script>
+</body>
+</html>

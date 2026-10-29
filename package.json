@@ -1,0 +1,55 @@
+{
+  "name": "workbuddy-pet",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Community desktop pet for local WorkBuddy credit and token statistics",
+  "main": "src/main.js",
+  "author": "WorkBuddyPet Contributors",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xihrni/xiaowa-usage.git"
+  },
+  "homepage": "https://github.com/xihrni/xiaowa-usage",
+  "bugs": {
+    "url": "https://github.com/xihrni/xiaowa-usage/issues"
+  },
+  "scripts": {
+    "start": "electron .",
+    "check": "node src/check-data.js",
+    "dist": "node node_modules/electron-builder/cli.js --win --x64"
+  },
+  "devDependencies": {
+    "electron": "^38.3.0",
+    "electron-builder": "^26.18.0"
+  },
+  "build": {
+    "appId": "com.workbuddy.pet.community",
+    "productName": "WorkBuddyPet",
+    "files": [
+      "src/**/*",
+      "assets/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "release-builder"
+    },
+    "win": {
+      "icon": "assets/icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
+      "artifactName": "WorkBuddyPet-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "WorkBuddy 小哇助手"
+    }
+  }
+}
