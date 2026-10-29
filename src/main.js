@@ -1,4 +1,5 @@
 const { app, BrowserWindow, ipcMain, screen, shell, Tray, Menu, nativeImage } = require('electron');
+const { autoUpdater } = require('electron-updater');
 const path = require('node:path');
 const fs = require('node:fs');
 const { getUsageData } = require('./usage-service');
@@ -8,7 +9,7 @@ let tray;
 let expanded = false;
 let refreshTimer;
 let dragOrigin;
-let settings = { scale: 0.8, opacity: 0.96, processingEnabled: true, processingDelay: 500, completionEnabled: true, completionDuration: 2000, statsEnabled: true, statsDuration: 6000, hoverPause: true, backgroundNotifications: false, soundEnabled: false, dndEnabled: false, dndStart: '22:00', dndEnd: '08:00' };
+let settings = { scale: 0.8, opacity: 0.96, processingEnabled: true, processingDelay: 500, completionEnabled: true, completionDuration: 2000, statsEnabled: true, statsDuration: 6000, hoverPause: true, backgroundNotifications: false, soundEnabled: false, dndEnabled: false, dndStart: '22:00', dndEnd: '08:00', autoCheckUpdates: true };
 const PET_SIZE = { width: 320, height: 480 };
 const PANEL_SIZE = { width: 1040, height: 810 };
 const settingsPath = () => path.join(app.getPath('userData'), 'pet-settings.json');
@@ -166,6 +167,98 @@ function friendlyError(error) {
   return message;
 }
 
+let updateState = { state: 'idle', currentVersion: app.getVersion(), availableVersion: '', percent: 0, message: '尚未检查更新' };
+
+function publishUpdateState(patch = {}) {
+  updateState = {
+    ...updateState,
+    ...patch,
+    currentVersion: app.getVersion(),
+    packaged: app.isPackaged
+  };
+  if (win && !win.isDestroyed()) win.webContents.send('update:state', updateState);
+  return updateState;
+}
+
+async function checkForUpdates(manual = false) {
+  if (!app.isPackaged) {
+    return publishUpdateState({ state: 'disabled', message: '开发模式不检查更新' });
+  }
+  if (['checking', 'downloading'].includes(updateState.state)) return updateState;
+  publishUpdateState({ state: 'checking', message: manual ? '正在检查更新…' : '正在后台检查更新…', percent: 0 });
+  try {
+    await autoUpdater.checkForUpdates();
+  } catch (error) {
+    publishUpdateState({ state: 'error', message: `检查更新失败：${String(error.message || error).split('\n')[0]}`, percent: 0 });
+  }
+  return updateState;
+}
+
+async function downloadUpdate() {
+  if (!app.isPackaged) return publishUpdateState({ state: 'disabled', message: '开发模式不支持更新' });
+  if (updateState.state === 'downloading') return updateState;
+  publishUpdateState({ state: 'downloading', percent: 0, message: '正在下载更新…' });
+  try {
+    await autoUpdater.downloadUpdate();
+  } catch (error) {
+    publishUpdateState({ state: 'error', message: `下载更新失败：${String(error.message || error).split('\n')[0]}` });
+  }
+  return updateState;
+}
+
+function installUpdate() {
+  if (!app.isPackaged || updateState.state !== 'downloaded') return updateState;
+  app.isQuitting = true;
+  setImmediate(() => autoUpdater.quitAndInstall(false, true));
+  return updateState;
+}
+
+function setupAutoUpdater() {
+  autoUpdater.autoDownload = false;
+  autoUpdater.autoInstallOnAppQuit = true;
+  autoUpdater.allowPrerelease = false;
+  autoUpdater.logger = {
+    info: message => console.log('[updater]', message),
+    warn: message => console.warn('[updater]', message),
+    error: message => console.error('[updater]', message),
+    debug: () => {}
+  };
+  autoUpdater.on('checking-for-update', () => publishUpdateState({ state: 'checking', message: '正在检查更新…' }));
+  autoUpdater.on('update-available', info => publishUpdateState({
+    state: 'available',
+    availableVersion: info.version,
+    percent: 0,
+    message: `发现新版本 v${info.version}`
+  }));
+  autoUpdater.on('update-not-available', info => publishUpdateState({
+    state: 'current',
+    availableVersion: info.version || '',
+    percent: 0,
+    message: '当前已经是最新版本'
+  }));
+  autoUpdater.on('download-progress', progress => publishUpdateState({
+    state: 'downloading',
+    percent: Math.round(progress.percent || 0),
+    message: `正在下载更新 ${Math.round(progress.percent || 0)}%`
+  }));
+  autoUpdater.on('update-downloaded', info => publishUpdateState({
+    state: 'downloaded',
+    availableVersion: info.version,
+    percent: 100,
+    message: `v${info.version} 已下载，重启后安装`
+  }));
+  autoUpdater.on('error', error => publishUpdateState({
+    state: 'error',
+    message: `更新失败：${String(error?.message || error).split('\n')[0]}`
+  }));
+
+  if (!app.isPackaged) {
+    publishUpdateState({ state: 'disabled', message: '开发模式不检查更新' });
+    return;
+  }
+  if (settings.autoCheckUpdates) setTimeout(() => checkForUpdates(false), 20000);
+}
+
 async function refreshUsage() {
   if (!win) return;
   try { win.webContents.send('usage:update', getUsageData()); }
@@ -176,6 +269,7 @@ app.whenReady().then(() => {
   loadSettings();
   createWindow();
   createTray();
+  setupAutoUpdater();
   refreshUsage();
   refreshTimer = setInterval(refreshUsage, 5000);
   ipcMain.handle('usage:refresh', async () => {
@@ -183,6 +277,10 @@ app.whenReady().then(() => {
     catch (error) { return { error: friendlyError(error) }; }
   });
   ipcMain.handle('settings:get', () => settings);
+  ipcMain.handle('update:get-state', () => updateState);
+  ipcMain.handle('update:check', () => checkForUpdates(true));
+  ipcMain.handle('update:download', () => downloadUpdate());
+  ipcMain.handle('update:install', () => installUpdate());
   ipcMain.on('settings:update', (_event, patch) => {
     settings = {
       ...settings,
@@ -199,7 +297,8 @@ app.whenReady().then(() => {
       soundEnabled: Boolean(patch.soundEnabled ?? settings.soundEnabled),
       dndEnabled: Boolean(patch.dndEnabled ?? settings.dndEnabled),
       dndStart: /^([01]\d|2[0-3]):[0-5]\d$/.test(patch.dndStart ?? settings.dndStart) ? (patch.dndStart ?? settings.dndStart) : '22:00',
-      dndEnd: /^([01]\d|2[0-3]):[0-5]\d$/.test(patch.dndEnd ?? settings.dndEnd) ? (patch.dndEnd ?? settings.dndEnd) : '08:00'
+      dndEnd: /^([01]\d|2[0-3]):[0-5]\d$/.test(patch.dndEnd ?? settings.dndEnd) ? (patch.dndEnd ?? settings.dndEnd) : '08:00',
+      autoCheckUpdates: Boolean(patch.autoCheckUpdates ?? settings.autoCheckUpdates)
     };
     fs.writeFileSync(settingsPath(), JSON.stringify(settings, null, 2));
     win?.setOpacity(settings.opacity);

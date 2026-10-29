@@ -100,6 +100,25 @@
               <label>统计气泡停留<div><input id="statsDuration" type="number" min="3" max="60" step="1" value="6"><span>秒</span></div></label>
             </div>
           </div>
+          <div class="settings-card update-card">
+            <div class="setting-row">
+              <div><strong>版本与更新</strong><span>检查 GitHub Release 中的新版本</span></div>
+              <span class="update-badge" id="updateBadge">尚未检查</span>
+            </div>
+            <div class="update-version-row"><span>当前版本</span><strong id="currentVersion">--</strong></div>
+            <div class="update-actions">
+              <button class="update-button secondary" id="checkUpdates">检查更新</button>
+              <button class="update-button primary" id="downloadUpdate" hidden>下载更新</button>
+              <button class="update-button primary" id="installUpdate" hidden>重启并安装</button>
+              <a class="update-release-link" id="updateReleaseLink" href="https://github.com/xihrni/xiaowa-usage/releases" target="_blank" rel="noreferrer">版本记录</a>
+            </div>
+            <div class="update-progress" id="updateProgress" hidden>
+              <div class="update-progress-track"><i id="updateProgressBar"></i></div>
+              <span id="updateProgressText">0%</span>
+            </div>
+            <p class="update-message" id="updateMessage">启动后可在这里检查新版本。</p>
+            <label class="update-auto"><input id="autoCheckUpdates" type="checkbox" checked> 启动时自动检查更新</label>
+          </div>
           <div class="settings-actions"><span id="settingsHint">调整后点击保存才会应用</span><button id="saveSettings" disabled>保存设置</button></div>
           <div class="settings-note">点击小猫开合统计面板，拖动小猫调整位置；关闭窗口后会隐藏在右下角托盘中。</div>
         </section>

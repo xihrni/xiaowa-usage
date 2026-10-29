@@ -533,7 +533,7 @@ $('#clearRange').onclick = () => {
   renderAll();
 };
 
-let savedSettings = { scale: 0.8, opacity: 0.96, processingEnabled: true, processingDelay: 500, completionEnabled: true, completionDuration: 2000, statsEnabled: true, statsDuration: 6000, hoverPause: true, backgroundNotifications: false, soundEnabled: false, dndEnabled: false, dndStart: '22:00', dndEnd: '08:00' };
+let savedSettings = { scale: 0.8, opacity: 0.96, processingEnabled: true, processingDelay: 500, completionEnabled: true, completionDuration: 2000, statsEnabled: true, statsDuration: 6000, hoverPause: true, backgroundNotifications: false, soundEnabled: false, dndEnabled: false, dndStart: '22:00', dndEnd: '08:00', autoCheckUpdates: true };
 function applySettings(settings) {
   savedSettings = settings;
   if (isDnd() && taskState.phase !== 'hidden') hideBubble();
@@ -542,7 +542,7 @@ function applySettings(settings) {
   $('#scaleValue').textContent = `${Math.round(settings.scale * 100)}%`;
   $('#opacitySlider').value = Math.round(settings.opacity * 100);
   $('#opacityValue').textContent = `${Math.round(settings.opacity * 100)}%`;
-  for (const key of ['processingEnabled', 'completionEnabled', 'statsEnabled', 'hoverPause', 'backgroundNotifications', 'soundEnabled', 'dndEnabled']) $(`#${key}`).checked = settings[key];
+  for (const key of ['processingEnabled', 'completionEnabled', 'statsEnabled', 'hoverPause', 'backgroundNotifications', 'soundEnabled', 'dndEnabled', 'autoCheckUpdates']) $(`#${key}`).checked = Boolean(settings[key]);
   $('#dndStart').value = settings.dndStart;
   $('#dndEnd').value = settings.dndEnd;
   $('#processingDelay').value = settings.processingDelay;
@@ -561,7 +561,7 @@ function previewSettings() {
 }
 $('#scaleSlider').oninput = previewSettings;
 $('#opacitySlider').oninput = previewSettings;
-for (const id of ['processingEnabled', 'completionEnabled', 'statsEnabled', 'hoverPause', 'backgroundNotifications', 'soundEnabled', 'dndEnabled', 'dndStart', 'dndEnd', 'processingDelay', 'completionDuration', 'statsDuration']) $(`#${id}`).addEventListener('input', previewSettings);
+for (const id of ['processingEnabled', 'completionEnabled', 'statsEnabled', 'hoverPause', 'backgroundNotifications', 'soundEnabled', 'dndEnabled', 'autoCheckUpdates', 'dndStart', 'dndEnd', 'processingDelay', 'completionDuration', 'statsDuration']) $(`#${id}`).addEventListener('input', previewSettings);
 $('#saveSettings').onclick = () => {
   $('#saveSettings').disabled = true;
   $('#settingsHint').textContent = '正在保存…';
@@ -579,11 +579,58 @@ $('#saveSettings').onclick = () => {
     soundEnabled: $('#soundEnabled').checked,
     dndEnabled: $('#dndEnabled').checked,
     dndStart: $('#dndStart').value,
-    dndEnd: $('#dndEnd').value
+    dndEnd: $('#dndEnd').value,
+    autoCheckUpdates: $('#autoCheckUpdates').checked
   });
 };
 window.petAPI.onSettings(applySettings);
 window.petAPI.getSettings().then(applySettings);
+
+function renderUpdateState(update = {}) {
+  const state = update.state || 'idle';
+  const badge = $('#updateBadge');
+  const labels = {
+    idle: '待检查',
+    disabled: '开发模式',
+    checking: '检查中',
+    available: update.availableVersion ? `v${update.availableVersion}` : '有新版本',
+    current: '已是最新',
+    downloading: `${update.percent || 0}%`,
+    downloaded: '待安装',
+    error: '检查失败'
+  };
+  badge.textContent = labels[state] || '待检查';
+  badge.className = `update-badge${['available', 'downloaded'].includes(state) ? ' available' : ''}${state === 'error' ? ' error' : ''}`;
+  $('#currentVersion').textContent = `v${update.currentVersion || '0.1.0'}`;
+  $('#updateMessage').textContent = update.message || '启动后可在这里检查新版本。';
+  const busy = ['checking', 'downloading'].includes(state);
+  $('#checkUpdates').disabled = busy || !update.packaged;
+  $('#checkUpdates').textContent = state === 'checking' ? '正在检查…' : '检查更新';
+  $('#downloadUpdate').hidden = state !== 'available';
+  $('#installUpdate').hidden = state !== 'downloaded';
+  const progress = $('#updateProgress');
+  progress.hidden = !['downloading', 'downloaded'].includes(state);
+  const percent = Math.max(0, Math.min(100, Number(update.percent) || 0));
+  $('#updateProgressBar').style.width = `${percent}%`;
+  $('#updateProgressText').textContent = `${percent}%`;
+  if (update.availableVersion) {
+    $('#updateReleaseLink').href = `https://github.com/xihrni/xiaowa-usage/releases/tag/v${update.availableVersion}`;
+  }
+}
+
+$('#checkUpdates').onclick = async () => {
+  $('#checkUpdates').disabled = true;
+  $('#checkUpdates').textContent = '正在检查…';
+  await window.petAPI.checkForUpdates();
+};
+$('#downloadUpdate').onclick = async () => {
+  $('#downloadUpdate').disabled = true;
+  await window.petAPI.downloadUpdate();
+  $('#downloadUpdate').disabled = false;
+};
+$('#installUpdate').onclick = () => window.petAPI.installUpdate();
+window.petAPI.onUpdateState(renderUpdateState);
+window.petAPI.getUpdateState().then(renderUpdateState);
 
 const bubble = $('#petBubble');
 bubble.addEventListener('mouseenter', () => {

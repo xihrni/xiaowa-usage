@@ -26,6 +26,15 @@
   "build": {
     "appId": "com.workbuddy.pet.community",
     "productName": "WorkBuddyPet",
+    "copyright": "Copyright © 2026 WorkBuddyPet Contributors",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "xihrni",
+        "repo": "xiaowa-usage",
+        "releaseType": "release"
+      }
+    ],
     "files": [
       "src/**/*",
       "assets/**/*",
@@ -39,7 +48,9 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "artifactName": "WorkBuddyPet-Setup-${version}.${ext}"
@@ -51,5 +62,8 @@
       "createStartMenuShortcut": true,
       "shortcutName": "WorkBuddy 小哇助手"
     }
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.11"
   }
 }

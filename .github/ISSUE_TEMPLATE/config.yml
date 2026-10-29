@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 隐私说明
+    url: https://github.com/xihrni/xiaowa-usage/blob/main/PRIVACY.md
+    about: 了解小哇读取哪些数据、数据保存在哪里。
+  - name: 安全报告
+    url: https://github.com/xihrni/xiaowa-usage/blob/main/SECURITY.md
+    about: 发现安全问题时，请先阅读报告方式，不要在公开 Issue 中附带利用细节。
+  - name: 使用问题
+    url: https://github.com/xihrni/xiaowa-usage/blob/main/docs/FAQ.md
+    about: 启动、数据读取、通知和卸载等常见问题。
