@@ -208,18 +208,49 @@ function showWelcomeGreeting() {
   }, 5000);
 }
 
-const PAT_REACTIONS = [
-  { title: '喵～', message: '再摸一下嘛' },
-  { title: '嘿嘿', message: '好舒服呀' },
-  { title: '收到摸摸头', message: '主人今天也要顺利' },
-  { title: '呼噜呼噜…', message: '再摸就要融化啦' },
-  { title: '耳朵好痒', message: '但可以再摸一下' },
-  { title: '小哇很开心', message: '今天也陪着你' }
+const PAT_ACTIONS = [
+  {
+    id: 'gentle',
+    src: '../assets/pat-animation.webp',
+    duration: 2268,
+    messages: [
+      { title: '喵～', message: '再摸一下嘛' },
+      { title: '嘿嘿', message: '好舒服呀' },
+      { title: '收到摸摸头', message: '主人今天也要顺利' },
+      { title: '呼噜呼噜…', message: '再摸就要融化啦' },
+      { title: '耳朵好痒', message: '但可以再摸一下' },
+      { title: '小哇很开心', message: '今天也陪着你' }
+    ]
+  },
+  {
+    id: 'happy',
+    src: '../assets/action-happy.webp',
+    duration: 2016,
+    messages: [
+      { title: '开心到跳起来', message: '嘿嘿，今天运气不错' },
+      { title: '小哇蹦给你看', message: '接住我呀' },
+      { title: '充满电啦', message: '又可以继续陪你' },
+      { title: '蹦蹦跳跳', message: '今天的烦恼都弹走' },
+      { title: '转个圈', message: '继续加油呀' }
+    ]
+  },
+  {
+    id: 'shy',
+    src: '../assets/action-shy.webp',
+    duration: 2016,
+    messages: [
+      { title: '诶…别一直摸啦', message: '脸有点热' },
+      { title: '耳朵都软了', message: '再摸就害羞了' },
+      { title: '主人，看别处啦', message: '这样太犯规了' },
+      { title: '捂住脸', message: '但可以再来一下' },
+      { title: '小哇不好意思', message: '尾巴都藏不住' }
+    ]
+  }
 ];
 let patActive = false;
 let patCooldownUntil = 0;
 let patTimer = null;
-let lastPatIndex = -1;
+let lastActionIndex = -1;
 
 function showPetOverlay(title, message, duration, onHide) {
   clearTimeout(patTimer);
@@ -246,8 +277,6 @@ function spawnPetHearts() {
   }
 }
 
-const PAT_ANIMATION = '../assets/pat-animation.webp';
-const PAT_ANIMATION_DURATION = 2268;
 function patPet() {
   const now = Date.now();
   if (patActive || now < patCooldownUntil) return;
@@ -255,10 +284,14 @@ function patPet() {
   const stage = $('#petStage');
   const animation = $('#patAnimation');
   const previousMode = state.petMode;
-  let index = Math.floor(Math.random() * PAT_REACTIONS.length);
-  if (PAT_REACTIONS.length > 1 && index === lastPatIndex) index = (index + 1) % PAT_REACTIONS.length;
-  lastPatIndex = index;
-  const reaction = PAT_REACTIONS[index];
+  let actionIndex = Math.floor(Math.random() * PAT_ACTIONS.length);
+  if (PAT_ACTIONS.length > 1 && actionIndex === lastActionIndex) actionIndex = (actionIndex + 1) % PAT_ACTIONS.length;
+  lastActionIndex = actionIndex;
+  const action = PAT_ACTIONS[actionIndex];
+  let messageIndex = Math.floor(Math.random() * action.messages.length);
+  if (action.messages.length > 1 && messageIndex === action.lastMessageIndex) messageIndex = (messageIndex + 1) % action.messages.length;
+  action.lastMessageIndex = messageIndex;
+  const reaction = action.messages[messageIndex];
   const restoreMode = () => {
     if (taskState.active.size) return 'working';
     if (previousMode === 'greeting' && !welcomeActive) return 'idle';
@@ -271,7 +304,7 @@ function patPet() {
   animation.classList.remove('visible');
   animation.removeAttribute('src');
   void animation.offsetWidth;
-  animation.src = PAT_ANIMATION;
+  animation.src = action.src;
   animation.classList.add('visible');
   spawnPetHearts();
   let animationDone = false;
@@ -289,12 +322,12 @@ function patPet() {
       animation.removeAttribute('src');
     }, 380);
   };
-  const animationTimer = setTimeout(finishAnimation, PAT_ANIMATION_DURATION);
+  const animationTimer = setTimeout(finishAnimation, action.duration);
   animation.onerror = () => {
     clearTimeout(animationTimer);
     finishAnimation();
   };
-  showPetOverlay(reaction.title, reaction.message, 2850, () => {
+  showPetOverlay(reaction.title, reaction.message, action.duration + 570, () => {
     patActive = false;
     patCooldownUntil = Date.now() + 700;
     stage.classList.remove('patting', 'animating', 'returning');
