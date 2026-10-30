@@ -246,27 +246,54 @@ function spawnPetHearts() {
   }
 }
 
+const PAT_ANIMATION = '../assets/pat-animation.webp';
 function patPet() {
   const now = Date.now();
   if (patActive || now < patCooldownUntil) return;
   patActive = true;
   const stage = $('#petStage');
+  const animation = $('#patAnimation');
   const previousMode = state.petMode;
   let index = Math.floor(Math.random() * PAT_REACTIONS.length);
   if (PAT_REACTIONS.length > 1 && index === lastPatIndex) index = (index + 1) % PAT_REACTIONS.length;
   lastPatIndex = index;
   const reaction = PAT_REACTIONS[index];
-  stage.classList.add('patting');
+  const restoreMode = () => {
+    if (taskState.active.size) return 'working';
+    if (previousMode === 'greeting' && !welcomeActive) return 'idle';
+    return previousMode;
+  };
   setPetMode('greeting');
+  stage.classList.add('patting', 'animating');
+  animation.classList.remove('visible');
+  animation.removeAttribute('src');
+  void animation.offsetWidth;
+  animation.src = PAT_ANIMATION;
+  animation.classList.add('visible');
   spawnPetHearts();
+  let animationDone = false;
+  const finishAnimation = () => {
+    if (animationDone) return;
+    animationDone = true;
+    animation.onerror = null;
+    setPetMode(restoreMode());
+    stage.classList.remove('animating');
+    animation.classList.remove('visible');
+    setTimeout(() => animation.removeAttribute('src'), 180);
+  };
+  const animationTimer = setTimeout(finishAnimation, 1550);
+  animation.onerror = () => {
+    clearTimeout(animationTimer);
+    finishAnimation();
+  };
   showPetOverlay(reaction.title, reaction.message, 2500, () => {
     patActive = false;
-    patCooldownUntil = Date.now() + 900;
-    stage.classList.remove('patting');
+    patCooldownUntil = Date.now() + 700;
+    stage.classList.remove('patting', 'animating');
+    animation.classList.remove('visible');
+    animation.removeAttribute('src');
     $('#petHearts').innerHTML = '';
-    if (taskState.active.size) setPetMode('working');
-    else if (previousMode === 'greeting' && !welcomeActive) setPetMode('idle');
-    else setPetMode(previousMode);
+    setPetMode(restoreMode());
   });
 }
 

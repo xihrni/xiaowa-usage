@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>WorkBuddy 小哇</title>
   <link rel="stylesheet" href="styles.css">
+  <link rel="preload" as="image" href="../assets/pat-animation.webp" type="image/webp">
 </head>
 <body data-tab="current">
   <main id="app">
@@ -21,7 +22,10 @@
         <span id="patBubbleMessage">再摸一下</span>
       </div>
       <div class="pet-hearts" id="petHearts" aria-hidden="true"></div>
-      <img id="petImage" class="pet-image" src="../assets/greeting.png" alt="WorkBuddy 小猫娘" draggable="false">
+      <div class="pet-visual" id="petVisual">
+        <img id="petImage" class="pet-image" src="../assets/greeting.png" alt="WorkBuddy 小猫娘" draggable="false">
+        <img id="patAnimation" class="pet-pat-animation" alt="" aria-hidden="true" draggable="false">
+      </div>
       <div class="pet-hint" id="petStatus">点我查看用量</div>
     </section>
 
