@@ -264,10 +264,10 @@ function patPet() {
     if (previousMode === 'greeting' && !welcomeActive) return 'idle';
     return previousMode;
   };
-  setPetMode('greeting');
-  animation.classList.remove('exiting');
+  setPetMode('greeting', true);
   stage.classList.remove('returning');
   stage.classList.add('patting', 'animating');
+  animation.style.display = 'block';
   animation.classList.remove('visible');
   animation.removeAttribute('src');
   void animation.offsetWidth;
@@ -279,14 +279,13 @@ function patPet() {
     if (animationDone) return;
     animationDone = true;
     animation.onerror = null;
-    setPetMode(restoreMode());
+    setPetMode(restoreMode(), true);
     stage.classList.remove('animating');
     stage.classList.add('returning');
-    animation.classList.add('exiting');
     animation.classList.remove('visible');
+    animation.style.display = 'none';
     setTimeout(() => {
-      animation.classList.remove('exiting');
-      stage.classList.remove('returning');
+          stage.classList.remove('returning');
       animation.removeAttribute('src');
     }, 380);
   };
@@ -299,10 +298,11 @@ function patPet() {
     patActive = false;
     patCooldownUntil = Date.now() + 700;
     stage.classList.remove('patting', 'animating', 'returning');
-    animation.classList.remove('visible', 'exiting');
+    animation.classList.remove('visible');
+    animation.style.display = 'none';
     animation.removeAttribute('src');
     $('#petHearts').innerHTML = '';
-    setPetMode(restoreMode());
+    setPetMode(restoreMode(), true);
   });
 }
 
@@ -393,10 +393,15 @@ function syncTaskBubble(data) {
   }
 }
 
-function setPetMode(mode) {
+function setPetMode(mode, instant = false) {
   if (state.petMode === mode) return;
   state.petMode = mode;
   const image = $('#petImage');
+  if (instant) {
+    image.style.opacity = '1';
+    image.src = `../assets/${mode}.png`;
+    return;
+  }
   image.style.opacity = '.25';
   setTimeout(() => { image.src = `../assets/${mode}.png`; image.style.opacity = '1'; }, 130);
 }
@@ -767,6 +772,7 @@ $('#downloadUpdate').onclick = async () => {
 };
 $('#installUpdate').onclick = () => window.petAPI.installUpdate();
 window.petAPI.onUpdateState(renderUpdateState);
+['idle', 'greeting', 'working', 'completed', 'sleeping'].forEach(mode => { const image = new Image(); image.src = `../assets/${mode}.png`; });
 window.petAPI.getUpdateState().then(renderUpdateState);
 
 const bubble = $('#petBubble');
