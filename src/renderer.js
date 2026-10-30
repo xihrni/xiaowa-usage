@@ -208,6 +208,73 @@ function showWelcomeGreeting() {
   }, 5000);
 }
 
+const PAT_REACTIONS = [
+  { title: '喵～', message: '再摸一下嘛' },
+  { title: '嘿嘿', message: '好舒服呀' },
+  { title: '收到摸摸头', message: '主人今天也要顺利' },
+  { title: '呼噜呼噜…', message: '再摸就要融化啦' },
+  { title: '耳朵好痒', message: '但可以再摸一下' },
+  { title: '小哇很开心', message: '今天也陪着你' }
+];
+let patActive = false;
+let patCooldownUntil = 0;
+let patTimer = null;
+let lastPatIndex = -1;
+
+function showPetOverlay(title, message, duration, onHide) {
+  clearTimeout(patTimer);
+  $('#patBubbleTitle').textContent = title;
+  $('#patBubbleMessage').textContent = message;
+  $('#patBubble').classList.add('visible');
+  patTimer = setTimeout(() => {
+    $('#patBubble').classList.remove('visible');
+    if (onHide) onHide();
+  }, duration);
+}
+
+function spawnPetHearts() {
+  const container = $('#petHearts');
+  container.innerHTML = '';
+  for (let i = 0; i < 4; i++) {
+    const heart = document.createElement('span');
+    heart.className = 'pet-heart';
+    heart.textContent = '♥';
+    heart.style.left = `${18 + Math.random() * 64}%`;
+    heart.style.fontSize = `${14 + Math.random() * 7}px`;
+    heart.style.animationDelay = `${i * 90}ms`;
+    container.appendChild(heart);
+  }
+}
+
+function patPet() {
+  const now = Date.now();
+  if (patActive || now < patCooldownUntil) return;
+  patActive = true;
+  const stage = $('#petStage');
+  const previousMode = state.petMode;
+  let index = Math.floor(Math.random() * PAT_REACTIONS.length);
+  if (PAT_REACTIONS.length > 1 && index === lastPatIndex) index = (index + 1) % PAT_REACTIONS.length;
+  lastPatIndex = index;
+  const reaction = PAT_REACTIONS[index];
+  stage.classList.add('patting');
+  setPetMode('greeting');
+  spawnPetHearts();
+  showPetOverlay(reaction.title, reaction.message, 2500, () => {
+    patActive = false;
+    patCooldownUntil = Date.now() + 900;
+    stage.classList.remove('patting');
+    $('#petHearts').innerHTML = '';
+    if (taskState.active.size) setPetMode('working');
+    else if (previousMode === 'greeting' && !welcomeActive) setPetMode('idle');
+    else setPetMode(previousMode);
+  });
+}
+
+function showPetNotice(notice = {}) {
+  if (patActive) return;
+  showPetOverlay(notice.title || '小哇', notice.message || '暂时无法完成操作。', 4200);
+}
+
 function showTaskStats(sessionOrItems) {
   const items = Array.isArray(sessionOrItems)
     ? sessionOrItems
@@ -720,9 +787,15 @@ petImage.addEventListener('pointerup', event => {
   dragging = false;
 });
 petImage.addEventListener('pointercancel', () => { pointerStart = null; dragging = false; window.petAPI.dragEnd(); });
+petImage.addEventListener('contextmenu', event => {
+  event.preventDefault();
+  window.petAPI.openPetMenu();
+});
 window.petAPI.onUsage(acceptData);
 window.petAPI.onError(message => { $('#petStatus').textContent = `读取失败：${message}`; showDataNotice(message); });
 window.petAPI.onPanelState(expanded => { state.expanded = expanded; document.body.classList.toggle('expanded', expanded); });
+window.petAPI.onPetPat(patPet);
+window.petAPI.onPetNotice(showPetNotice);
 $('#petImage')
 window.petAPI.refresh().then(acceptData).catch(error => { $('#petStatus').textContent = error.message; showDataNotice(error.message); });
 setTimeout(showWelcomeGreeting, 700);

@@ -1,5 +1,6 @@
 const { app, BrowserWindow, ipcMain, screen, shell, Tray, Menu, nativeImage } = require('electron');
 const { autoUpdater } = require('electron-updater');
+const { execFile } = require('node:child_process');
 const path = require('node:path');
 const fs = require('node:fs');
 const { getUsageData } = require('./usage-service');
@@ -52,6 +53,155 @@ function togglePanel(show) {
   win.setBounds(next, true);
   win.show();
   win.webContents.send('panel:state', expanded);
+}
+
+function findWorkBuddyExecutable() {
+  const home = process.env.USERPROFILE || require('node:os').homedir();
+  const localAppData = process.env.LOCALAPPDATA || path.join(home, 'AppData', 'Local');
+  const systemDrive = process.env.SystemDrive || 'C:';
+  const candidates = [
+    path.join(localAppData, 'Programs', 'WorkBuddy', 'WorkBuddy.exe'),
+    path.join(process.env.ProgramFiles || path.join(systemDrive, 'Program Files'), 'WorkBuddy', 'WorkBuddy.exe'),
+    path.join(process.env['ProgramFiles(x86)'] || path.join(systemDrive, 'Program Files (x86)'), 'WorkBuddy', 'WorkBuddy.exe')
+  ];
+  return candidates.find(file => file && fs.existsSync(file)) || '';
+}
+
+function openWorkBuddy() {
+  return new Promise(resolve => {
+    if (process.platform !== 'win32') {
+      shell.openPath(findWorkBuddyExecutable() || '');
+      resolve({ ok: true });
+      return;
+    }
+    const executable = findWorkBuddyExecutable();
+    const safeExecutable = executable.replace(/'/g, "''");
+    const script = `
+$ErrorActionPreference = 'Stop'
+Add-Type @"
+using System;
+using System.Runtime.InteropServices;
+public static class XiaowaWin32 {
+  [DllImport("user32.dll")] public static extern bool ShowWindowAsync(IntPtr hWnd, int nCmdShow);
+  [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr hWnd);
+  [DllImport("user32.dll")] public static extern void SwitchToThisWindow(IntPtr hWnd, bool fUnknown);
+  [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
+  [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
+  [DllImport("user32.dll")] public static extern bool AttachThreadInput(uint idAttach, uint idAttachTo, bool fAttach);
+  [DllImport("user32.dll")] public static extern bool BringWindowToTop(IntPtr hWnd);
+}
+"@
+function Focus-WorkBuddy($process) {
+  $handle = [IntPtr]$process.MainWindowHandle
+  if ($handle -eq [IntPtr]::Zero) { return $false }
+  [uint32]$foregroundPid = 0
+  [uint32]$targetPid = 0
+  $foreground = [XiaowaWin32]::GetForegroundWindow()
+  $foregroundThread = [XiaowaWin32]::GetWindowThreadProcessId($foreground, [ref]$foregroundPid)
+  $targetThread = [XiaowaWin32]::GetWindowThreadProcessId($handle, [ref]$targetPid)
+  $attached = $false
+  if ($foregroundThread -ne $targetThread) {
+    $attached = [XiaowaWin32]::AttachThreadInput($foregroundThread, $targetThread, $true)
+  }
+  $foregroundBefore = [XiaowaWin32]::GetForegroundWindow()
+  [void][XiaowaWin32]::ShowWindowAsync($handle, 9)
+  Start-Sleep -Milliseconds 80
+  [void][XiaowaWin32]::BringWindowToTop($handle)
+  $foregroundSet = [XiaowaWin32]::SetForegroundWindow($handle)
+  [XiaowaWin32]::SwitchToThisWindow($handle, $true)
+  if ($attached) { [void][XiaowaWin32]::AttachThreadInput($foregroundThread, $targetThread, $false) }
+  Start-Sleep -Milliseconds 180
+  $foreground = [XiaowaWin32]::GetForegroundWindow()
+  [void][XiaowaWin32]::GetWindowThreadProcessId($foreground, [ref]$foregroundPid)
+  return (($foregroundPid -eq [uint32]$process.Id) -or (($foregroundBefore -eq [IntPtr]::Zero) -and $foregroundSet))
+}
+try {
+  $running = @(Get-Process -Name 'WorkBuddy' -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowHandle -ne 0 })
+  foreach ($process in $running) {
+    if (Focus-WorkBuddy $process) {
+      Write-Output 'activated'
+      exit 0
+    }
+  }
+  if ($running.Count -gt 0) {
+    Write-Output 'unfocused'
+    exit 0
+  }
+  $exe = '${safeExecutable}'
+  if (-not (Test-Path -LiteralPath $exe)) {
+    Write-Output 'not-found'
+    exit 0
+  }
+  Start-Process -FilePath $exe
+  Start-Sleep -Milliseconds 900
+  $started = @(Get-Process -Name 'WorkBuddy' -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowHandle -ne 0 })
+  foreach ($process in $started) {
+    if (Focus-WorkBuddy $process) { Write-Output 'started'; exit 0 }
+  }
+  Write-Output 'started'
+} catch {
+  Write-Output ('error: ' + $_.Exception.Message)
+}
+`;
+    const encoded = Buffer.from(script, 'utf16le').toString('base64');
+    const powershell = path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
+    execFile(powershell, ['-NoProfile', '-NonInteractive', '-WindowStyle', 'Hidden', '-EncodedCommand', encoded], {
+      windowsHide: true,
+      timeout: 12000
+    }, async (error, stdout, stderr) => {
+      if (error) {
+        console.warn('Unable to open WorkBuddy:', error.message, String(stderr || '').trim().slice(0, 300));
+        resolve({ ok: false, reason: 'error' });
+        return;
+      }
+      const result = String(stdout || '').trim().split(/\r?\n/).pop();
+      if (['activated', 'started'].includes(result)) {
+        resolve({ ok: true, reason: result });
+        return;
+      }
+      if (result === 'unfocused' && executable) {
+        try {
+          await shell.openExternal('workbuddy://');
+          resolve({ ok: true, reason: 'protocol' });
+          return;
+        } catch (protocolError) {
+          console.warn('Unable to activate WorkBuddy protocol:', protocolError.message);
+        }
+      }
+      resolve({ ok: false, reason: result || 'error' });
+    });
+  });
+}
+
+function sendPetNotice(title, message) {
+  if (win && !win.isDestroyed()) win.webContents.send('pet:notice', { title, message });
+}
+
+function showPetContextMenu() {
+  if (!win) return;
+  const menu = Menu.buildFromTemplate([
+    { label: '摸一摸', click: () => win?.webContents.send('pet:pat') },
+    {
+      label: '打开 WorkBuddy',
+      click: async () => {
+        const result = await openWorkBuddy();
+        if (result.ok) return;
+        if (result.reason === 'unfocused') {
+          sendPetNotice('WorkBuddy 已在运行', '但没能切到前台，请从任务栏打开。');
+        } else if (result.reason === 'not-found') {
+          sendPetNotice('没有找到 WorkBuddy', '请先从开始菜单打开一次。');
+        } else {
+          sendPetNotice('打开 WorkBuddy 失败', '请从开始菜单手动打开。');
+        }
+      }
+    },
+    { label: '打开面板', enabled: !expanded, click: () => togglePanel(true) },
+    { type: 'separator' },
+    { label: '隐藏小哇', click: () => win?.hide() },
+    { type: 'separator' },
+    { label: '退出', click: () => { app.isQuitting = true; app.quit(); } }
+  ]);
+  menu.popup({ window: win });
 }
 
 function repairShortcutIcons() {
@@ -344,6 +494,7 @@ app.whenReady().then(() => {
     win?.webContents.send('settings:changed', settings);
   });
   ipcMain.on('panel:toggle', (_event, show) => togglePanel(show));
+  ipcMain.on('pet:context-menu', () => showPetContextMenu());
   ipcMain.on('drag:start', () => {
     if (!win) return;
     dragOrigin = { cursor: screen.getCursorScreenPoint(), bounds: win.getBounds() };

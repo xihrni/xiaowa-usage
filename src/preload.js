@@ -3,6 +3,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('petAPI', {
   refresh: () => ipcRenderer.invoke('usage:refresh'),
   togglePanel: show => ipcRenderer.send('panel:toggle', show),
+  openPetMenu: () => ipcRenderer.send('pet:context-menu'),
   minimize: () => ipcRenderer.send('window:minimize'),
   close: () => ipcRenderer.send('window:close'),
   openDataFolder: () => ipcRenderer.send('open:data-folder'),
@@ -19,5 +20,7 @@ contextBridge.exposeInMainWorld('petAPI', {
   onSettings: callback => ipcRenderer.on('settings:changed', (_event, settings) => callback(settings)),
   onUsage: callback => ipcRenderer.on('usage:update', (_event, data) => callback(data)),
   onError: callback => ipcRenderer.on('usage:error', (_event, message) => callback(message)),
-  onPanelState: callback => ipcRenderer.on('panel:state', (_event, expanded) => callback(expanded))
+  onPanelState: callback => ipcRenderer.on('panel:state', (_event, expanded) => callback(expanded)),
+  onPetPat: callback => ipcRenderer.on('pet:pat', () => callback()),
+  onPetNotice: callback => ipcRenderer.on('pet:notice', (_event, notice) => callback(notice))
 });
