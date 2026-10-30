@@ -1,8 +1,8 @@
 ﻿Unicode true
 !define APP_NAME "WorkBuddy 小哇助手"
 !define APP_EXE "WorkBuddyPet.exe"
-!define APP_VERSION "0.2.0"
-!define APP_VERSION4 "0.2.0.0"
+!define APP_VERSION "0.3.0"
+!define APP_VERSION4 "0.3.0.0"
 !define APP_PUBLISHER "WorkBuddyPet Contributors"
 !define APP_COPYRIGHT "Copyright © 2026 WorkBuddyPet Contributors"
 !define APP_HOMEPAGE "https://xiaowa.xihrni.com"
