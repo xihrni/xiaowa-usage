@@ -4,10 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>小哇 · WorkBuddy 本地用量桌宠</title>
-  <meta name="description" content="小哇是一款本地只读的 WorkBuddy 用量桌宠，帮你查看积分、Token、会话趋势和请求明细。不上传会话内容，无需注册。">
+  <meta name="description" content="小哇是一款本地只读的 WorkBuddy 用量桌宠，帮你查看积分、Token、会话趋势和请求明细；右键还能随机触发三种摸一摸动作。不上传会话内容，无需注册。">
   <meta name="theme-color" content="#f5fbf9">
   <meta property="og:title" content="小哇 · WorkBuddy 本地用量桌宠">
-  <meta property="og:description" content="让每一次对话的消耗，都看得见。本地只读，不上传会话内容。">
+  <meta property="og:description" content="让每一次对话的消耗，都看得见。三种随机互动，本地只读，不上传会话内容。">
   <meta property="og:type" content="website">
   <meta property="og:image" content="assets/current-session.png">
   <link rel="icon" href="assets/icon.png" type="image/png">
@@ -40,7 +40,7 @@
       <div class="hero-copy">
         <div class="eyebrow"><i></i> 本地优先的 WorkBuddy 桌面伴侣</div>
         <h1>让每一次对话的消耗，<em>都看得见。</em></h1>
-        <p class="hero-lead">小哇安静地待在桌面，帮你汇总 WorkBuddy 的积分、Token 和会话趋势。需要时展开面板，不需要时绝不打扰。</p>
+        <p class="hero-lead">小哇安静地待在桌面，帮你汇总 WorkBuddy 的积分、Token 和会话趋势。右键还能随机摸一摸，温柔摸头、开心蹦跳、害羞捂脸三种反应轮流出现；需要时展开面板，不需要时绝不打扰。</p>
         <div class="hero-actions">
           <a class="button primary" data-download-main href="https://github.com/xihrni/xiaowa-usage/releases/download/v0.4.0/WorkBuddyPet-Setup-0.4.0.exe">
             <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.5v10m0 0 3.5-3.5M10 12.5 6.5 9M3.5 15.5h13"/></svg>
@@ -85,7 +85,7 @@
       <div><strong>7</strong><span>个统计视图</span></div>
       <div><strong>100%</strong><span>本地读取</span></div>
       <div><strong>0</strong><span>账号注册</span></div>
-      <div><strong>4 种</strong><span>任务状态提示</span></div>
+      <div><strong>3 组</strong><span>随机互动动作</span></div>
     </section>
 
     <section class="section wrap" id="features">
@@ -146,7 +146,12 @@
       <div class="companion-copy">
         <span class="section-kicker">桌面上的陪伴感</span>
         <h2>工作有进展，小哇会告诉你。</h2>
-        <p>透明置顶、可拖动、可隐藏。处理中、完成、停止和失败都有轻量状态提示，也能设置免打扰时段与提示音。</p>
+        <p>透明置顶、可拖动、可隐藏。右键摸一摸会随机播放三种动作，并搭配对应气泡文案；处理中、完成、停止和失败也有轻量状态提示。宠物大小只缩放小猫，气泡字号独立调整，统计面板保持固定。</p>
+        <div class="action-peek" aria-label="摸一摸三种动作">
+          <figure><img src="assets/action-gentle.png" alt="温柔摸头动作"><span>温柔摸头</span></figure>
+          <figure><img src="assets/action-happy.png" alt="开心蹦跳动作"><span>开心蹦跳</span></figure>
+          <figure><img src="assets/action-shy.png" alt="害羞捂脸动作"><span>害羞捂脸</span></figure>
+        </div>
         <div class="mini-features">
           <div><strong>通知合并</strong><span>多个任务完成时只提醒一次</span></div>
           <div><strong>托盘常驻</strong><span>收起面板，不占任务栏</span></div>
@@ -201,7 +206,11 @@
         </details>
         <details>
           <summary>右键小猫可以做什么？</summary>
-          <p>右键可以摸一摸、打开 WorkBuddy、展开面板、隐藏小哇或退出。左键单击仍然是展开和收起统计面板。</p>
+          <p>右键可以摸一摸、打开 WorkBuddy、展开面板、隐藏小哇或退出。摸一摸会随机播放温柔摸头、开心蹦跳或害羞捂脸，左键单击仍然是展开和收起统计面板。</p>
+        </details>
+        <details>
+          <summary>摸一摸有哪些动作？</summary>
+          <p>目前有三组随机动作：温柔摸头、开心蹦跳和害羞捂脸，每次会避免连续重复同一组，气泡文案也会随机变化。</p>
         </details>
         <details>
           <summary>小哇如何更新？</summary>
