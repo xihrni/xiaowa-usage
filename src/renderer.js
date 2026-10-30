@@ -708,13 +708,16 @@ $('#clearRange').onclick = () => {
   renderAll();
 };
 
-let savedSettings = { scale: 0.8, opacity: 0.96, processingEnabled: true, processingDelay: 500, completionEnabled: true, completionDuration: 2000, statsEnabled: true, statsDuration: 6000, hoverPause: true, backgroundNotifications: false, soundEnabled: false, dndEnabled: false, dndStart: '22:00', dndEnd: '08:00', autoCheckUpdates: true };
+let savedSettings = { scale: 0.8, opacity: 0.96, processingEnabled: true, processingDelay: 500, completionEnabled: true, completionDuration: 2000, statsEnabled: true, statsDuration: 6000, hoverPause: true, backgroundNotifications: false, soundEnabled: false, dndEnabled: false, dndStart: '22:00', dndEnd: '08:00', autoCheckUpdates: true, bubbleFontSize: 12 };
 function applySettings(settings) {
   savedSettings = settings;
   if (isDnd() && taskState.phase !== 'hidden') hideBubble();
   document.documentElement.style.setProperty('--pet-scale', settings.scale);
   $('#scaleSlider').value = Math.round(settings.scale * 100);
   $('#scaleValue').textContent = `${Math.round(settings.scale * 100)}%`;
+  document.documentElement.style.setProperty('--bubble-font-size', `${settings.bubbleFontSize}px`);
+  $('#bubbleFontSlider').value = settings.bubbleFontSize;
+  $('#bubbleFontValue').textContent = `${settings.bubbleFontSize}px`;
   $('#opacitySlider').value = Math.round(settings.opacity * 100);
   $('#opacityValue').textContent = `${Math.round(settings.opacity * 100)}%`;
   for (const key of ['processingEnabled', 'completionEnabled', 'statsEnabled', 'hoverPause', 'backgroundNotifications', 'soundEnabled', 'dndEnabled', 'autoCheckUpdates']) $(`#${key}`).checked = Boolean(settings[key]);
@@ -728,13 +731,16 @@ function applySettings(settings) {
 }
 function previewSettings() {
   const scale = Number($('#scaleSlider').value);
+  const bubbleFont = Number($('#bubbleFontSlider').value);
   const opacity = Number($('#opacitySlider').value);
   $('#scaleValue').textContent = `${scale}%`;
+  $('#bubbleFontValue').textContent = `${bubbleFont}px`;
   $('#opacityValue').textContent = `${opacity}%`;
   $('#saveSettings').disabled = false;
   $('#settingsHint').textContent = '有未保存的调整';
 }
 $('#scaleSlider').oninput = previewSettings;
+$('#bubbleFontSlider').oninput = previewSettings;
 $('#opacitySlider').oninput = previewSettings;
 for (const id of ['processingEnabled', 'completionEnabled', 'statsEnabled', 'hoverPause', 'backgroundNotifications', 'soundEnabled', 'dndEnabled', 'autoCheckUpdates', 'dndStart', 'dndEnd', 'processingDelay', 'completionDuration', 'statsDuration']) $(`#${id}`).addEventListener('input', previewSettings);
 $('#saveSettings').onclick = () => {
@@ -742,6 +748,7 @@ $('#saveSettings').onclick = () => {
   $('#settingsHint').textContent = '正在保存…';
   window.petAPI.updateSettings({
     scale: Number($('#scaleSlider').value) / 100,
+    bubbleFontSize: Number($('#bubbleFontSlider').value),
     opacity: Number($('#opacitySlider').value) / 100,
     processingEnabled: $('#processingEnabled').checked,
     processingDelay: Number($('#processingDelay').value),

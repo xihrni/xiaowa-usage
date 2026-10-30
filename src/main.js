@@ -10,7 +10,7 @@ let tray;
 let expanded = false;
 let refreshTimer;
 let dragOrigin;
-let settings = { scale: 0.8, opacity: 0.96, processingEnabled: true, processingDelay: 500, completionEnabled: true, completionDuration: 2000, statsEnabled: true, statsDuration: 6000, hoverPause: true, backgroundNotifications: false, soundEnabled: false, dndEnabled: false, dndStart: '22:00', dndEnd: '08:00', autoCheckUpdates: true };
+let settings = { scale: 0.8, opacity: 0.96, processingEnabled: true, processingDelay: 500, completionEnabled: true, completionDuration: 2000, statsEnabled: true, statsDuration: 6000, hoverPause: true, backgroundNotifications: false, soundEnabled: false, dndEnabled: false, dndStart: '22:00', dndEnd: '08:00', autoCheckUpdates: true, bubbleFontSize: 12 };
 const PET_SIZE = { width: 320, height: 480 };
 const PANEL_SIZE = { width: 1040, height: 810 };
 const settingsPath = () => path.join(app.getPath('userData'), 'pet-settings.json');
@@ -19,6 +19,7 @@ function loadSettings() {
   try { settings = { ...settings, ...JSON.parse(fs.readFileSync(settingsPath(), 'utf8')) }; } catch {}
   settings.scale = Math.max(0.6, Math.min(1.5, Number(settings.scale) || 0.8));
   settings.opacity = Math.max(0.3, Math.min(1, Number(settings.opacity) || 0.96));
+  settings.bubbleFontSize = Math.max(10, Math.min(18, Number(settings.bubbleFontSize) || 12));
   settings.processingDelay = Math.max(0, Math.min(5000, Number(settings.processingDelay ?? 500)));
   settings.completionDuration = Math.max(1000, Math.min(60000, Number(settings.completionDuration) || 2000));
   settings.statsDuration = Math.max(3000, Math.min(60000, Number(settings.statsDuration) || 6000));
@@ -27,7 +28,10 @@ function loadSettings() {
 }
 
 function petSize() {
-  return { width: Math.round(PET_SIZE.width * settings.scale), height: Math.round(PET_SIZE.height * settings.scale) };
+  return {
+    width: Math.max(PET_SIZE.width, Math.round(PET_SIZE.width * settings.scale)),
+    height: Math.max(PET_SIZE.height, Math.round(PET_SIZE.height * settings.scale))
+  };
 }
 
 function clampToDisplay(bounds) {
@@ -470,6 +474,7 @@ app.whenReady().then(() => {
       ...settings,
       scale: Math.max(0.6, Math.min(1.5, Number(patch.scale ?? settings.scale))),
       opacity: Math.max(0.3, Math.min(1, Number(patch.opacity ?? settings.opacity))),
+      bubbleFontSize: Math.max(10, Math.min(18, Number(patch.bubbleFontSize ?? settings.bubbleFontSize))),
       processingEnabled: Boolean(patch.processingEnabled ?? settings.processingEnabled),
       processingDelay: Math.max(0, Math.min(5000, Number(patch.processingDelay ?? settings.processingDelay))),
       completionEnabled: Boolean(patch.completionEnabled ?? settings.completionEnabled),
