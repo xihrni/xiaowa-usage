@@ -247,6 +247,7 @@ function spawnPetHearts() {
 }
 
 const PAT_ANIMATION = '../assets/pat-animation.webp';
+const PAT_ANIMATION_DURATION = 2268;
 function patPet() {
   const now = Date.now();
   if (patActive || now < patCooldownUntil) return;
@@ -264,6 +265,8 @@ function patPet() {
     return previousMode;
   };
   setPetMode('greeting');
+  animation.classList.remove('exiting');
+  stage.classList.remove('returning');
   stage.classList.add('patting', 'animating');
   animation.classList.remove('visible');
   animation.removeAttribute('src');
@@ -278,19 +281,25 @@ function patPet() {
     animation.onerror = null;
     setPetMode(restoreMode());
     stage.classList.remove('animating');
+    stage.classList.add('returning');
+    animation.classList.add('exiting');
     animation.classList.remove('visible');
-    setTimeout(() => animation.removeAttribute('src'), 180);
+    setTimeout(() => {
+      animation.classList.remove('exiting');
+      stage.classList.remove('returning');
+      animation.removeAttribute('src');
+    }, 380);
   };
-  const animationTimer = setTimeout(finishAnimation, 1550);
+  const animationTimer = setTimeout(finishAnimation, PAT_ANIMATION_DURATION);
   animation.onerror = () => {
     clearTimeout(animationTimer);
     finishAnimation();
   };
-  showPetOverlay(reaction.title, reaction.message, 2500, () => {
+  showPetOverlay(reaction.title, reaction.message, 2850, () => {
     patActive = false;
     patCooldownUntil = Date.now() + 700;
-    stage.classList.remove('patting', 'animating');
-    animation.classList.remove('visible');
+    stage.classList.remove('patting', 'animating', 'returning');
+    animation.classList.remove('visible', 'exiting');
     animation.removeAttribute('src');
     $('#petHearts').innerHTML = '';
     setPetMode(restoreMode());
