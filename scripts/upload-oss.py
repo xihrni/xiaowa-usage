@@ -1,5 +1,5 @@
 import os
-import sys
+import tempfile
 from pathlib import Path
 
 import oss2
@@ -52,14 +52,23 @@ files.sort(key=lambda path: (path.name == "latest.yml", path.name))
 for path in files:
     content_type, cache_control = metadata(path.name)
     key = f"{prefix}/{path.name}"
-    bucket.put_object_from_file(
-        key,
-        str(path),
-        headers={
-            "Content-Type": content_type,
-            "Cache-Control": cache_control,
-        },
-    )
+    headers = {
+        "Content-Type": content_type,
+        "Cache-Control": cache_control,
+    }
+    if path.stat().st_size > 32 * 1024 * 1024:
+        oss2.resumable_upload(
+            bucket,
+            key,
+            str(path),
+            store=oss2.ResumableStore(root=tempfile.mkdtemp(prefix="xiaowa-oss-")),
+            headers=headers,
+            multipart_threshold=32 * 1024 * 1024,
+            part_size=8 * 1024 * 1024,
+            num_threads=4,
+        )
+    else:
+        bucket.put_object_from_file(key, str(path), headers=headers)
     result = bucket.head_object(key)
     print(f"uploaded {key} ({result.content_length} bytes)")
 
