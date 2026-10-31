@@ -33,7 +33,8 @@ async function loadLatestRelease() {
       node.href = setup?.browser_download_url || release.html_url || RELEASES_URL;
     });
   } catch {
-    document.querySelectorAll('[data-download-main], [data-download-portable]').forEach(node => {
+    // Keep the domestic OSS links baked into the page when the GitHub API is unavailable.
+    document.querySelectorAll('[data-download-github]').forEach(node => {
       node.href = RELEASES_URL;
     });
   }
