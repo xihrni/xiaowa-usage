@@ -1,6 +1,6 @@
 {
   "name": "workbuddy-pet",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "private": true,
   "description": "Community desktop pet for local WorkBuddy credit and token statistics",
   "main": "src/main.js",
@@ -29,10 +29,8 @@
     "copyright": "Copyright © 2026 WorkBuddyPet Contributors",
     "publish": [
       {
-        "provider": "github",
-        "owner": "xihrni",
-        "repo": "xiaowa-usage",
-        "releaseType": "release"
+        "provider": "generic",
+        "url": "https://xiaowa-xihrni-com.oss-cn-shenzhen.aliyuncs.com/stable/"
       }
     ],
     "files": [
