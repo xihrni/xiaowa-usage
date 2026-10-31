@@ -1,6 +1,7 @@
 const REPO = 'xihrni/xiaowa-usage';
 const RELEASE_API = `https://api.github.com/repos/${REPO}/releases/latest`;
 const RELEASES_URL = `https://github.com/${REPO}/releases/latest`;
+const OSS_BASE = 'https://xiaowa-xihrni-com.oss-cn-shenzhen.aliyuncs.com/stable';
 
 const menuButton = document.querySelector('#menuButton');
 const navLinks = document.querySelector('#navLinks');
@@ -23,10 +24,13 @@ async function loadLatestRelease() {
     const portable = release.assets?.find(asset => /win-x64\.zip$/i.test(asset.name));
     document.querySelectorAll('[data-latest-version]').forEach(node => { node.textContent = version; });
     document.querySelectorAll('[data-download-main]').forEach(node => {
-      node.href = setup?.browser_download_url || release.html_url || RELEASES_URL;
+      node.href = setup ? `${OSS_BASE}/${encodeURIComponent(setup.name)}` : (release.html_url || RELEASES_URL);
     });
     document.querySelectorAll('[data-download-portable]').forEach(node => {
-      node.href = portable?.browser_download_url || release.html_url || RELEASES_URL;
+      node.href = portable ? `${OSS_BASE}/${encodeURIComponent(portable.name)}` : (release.html_url || RELEASES_URL);
+    });
+    document.querySelectorAll('[data-download-github]').forEach(node => {
+      node.href = setup?.browser_download_url || release.html_url || RELEASES_URL;
     });
   } catch {
     document.querySelectorAll('[data-download-main], [data-download-portable]').forEach(node => {

@@ -38,13 +38,13 @@
 - **会话排行**：按积分排序，支持日期筛选与分页。
 - **请求明细**：查看会话、模型、积分和 Token 明细，可按会话与日期筛选。
 - **通知设置**：处理中提示、完成通知、后台任务通知、提示音和免打扰时段。
-- **自动更新**：启动时检查 GitHub Release，确认后下载并重启安装。
+- **自动更新**：从阿里云 OSS 国内源检查更新，确认后下载并重启安装；GitHub Release 保留为备用。
 
 ## 安装
 
 ### 安装版
 
-1. 打开 [GitHub Releases](https://github.com/xihrni/xiaowa-usage/releases/latest)；
+1. 打开[国内 OSS 下载目录](https://xiaowa-xihrni-com.oss-cn-shenzhen.aliyuncs.com/stable/)或 [GitHub Releases](https://github.com/xihrni/xiaowa-usage/releases/latest)；
 2. 下载最新 `WorkBuddyPet-Setup-*.exe`；
 3. 运行安装程序并按提示完成安装；
 4. 安装后从桌面或开始菜单启动「WorkBuddy 小哇助手」。
