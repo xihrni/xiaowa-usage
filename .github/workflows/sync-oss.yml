@@ -1,0 +1,57 @@
+name: Sync release to Aliyun OSS
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to mirror, for example v0.4.0"
+        required: true
+        default: "v0.4.0"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: oss-sync-${{ github.event.inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: Mirror release assets to OSS
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      ALIYUN_OSS_BUCKET: ${{ secrets.ALIYUN_OSS_BUCKET }}
+      ALIYUN_OSS_ENDPOINT: ${{ secrets.ALIYUN_OSS_ENDPOINT }}
+      ALIYUN_OSS_ACCESS_KEY_ID: ${{ secrets.ALIYUN_OSS_ACCESS_KEY_ID }}
+      ALIYUN_OSS_ACCESS_KEY_SECRET: ${{ secrets.ALIYUN_OSS_ACCESS_KEY_SECRET }}
+      ALIYUN_OSS_PUBLIC_BASE_URL: ${{ secrets.ALIYUN_OSS_PUBLIC_BASE_URL }}
+      ALIYUN_OSS_PREFIX: ${{ secrets.ALIYUN_OSS_PREFIX }}
+      OSS_SOURCE_DIR: release-builder/oss-sync
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Download release assets
+        run: |
+          mkdir -p "$OSS_SOURCE_DIR"
+          gh release download "${{ github.event.inputs.tag }}" \
+            --repo "${{ github.repository }}" \
+            --dir "$OSS_SOURCE_DIR" \
+            --pattern "WorkBuddyPet-Setup-*.exe" \
+            --pattern "WorkBuddyPet-*-win-x64.zip" \
+            --pattern "*.blockmap" \
+            --pattern "latest.yml" \
+            --pattern "SHA256SUMS.txt"
+
+      - name: Install OSS SDK
+        run: python -m pip install --quiet oss2
+
+      - name: Upload to OSS
+        run: python scripts/upload-oss.py
